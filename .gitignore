@@ -1,0 +1,4 @@
+Chat/.vs
+Chat/*/bin
+Chat/*/obj
+Chat/*/*.csproj.user
