@@ -3,10 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
-using System.Net.Sockets;
+using Server.Logging;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Net.Sockets;
 
 namespace Server.Server
 {
@@ -31,6 +32,7 @@ namespace Server.Server
             List<IConnection> closed = new List<IConnection>();
             Stopwatch stopwatch = new Stopwatch();
             TimeSpan timeToExecute;
+            Logger logger = Logger.GetInstance();
 
             while (run)
             {
@@ -52,7 +54,7 @@ namespace Server.Server
                         Message[] messages = connection.GetMessages();
                         foreach (Message message in messages)
                         {
-                            Console.WriteLine($"New message from {message.SenderName} to {message.ReceiverName}: {message.Text}");
+                            Logger.GetInstance().NewInfoLine($"New message from {message.SenderName} to {message.ReceiverName}: {message.Text}");
                             newMessages.Add(message);
                         }
                     } else if (!connection.HasClient)
@@ -95,7 +97,8 @@ namespace Server.Server
 
                 timeToExecute = stopwatch.Elapsed;
 
-                //Console.WriteLine($"One round of actions took: {timeToExecute.Seconds}.{timeToExecute.Milliseconds}s");
+                
+                logger.UpdateStaticLine(connections.Count, timeToExecute, -1);
 
                 Thread.Yield();
             }
@@ -109,6 +112,7 @@ namespace Server.Server
         public void Stop()
         {
             run = false;
+            Console.CursorVisible = true;
             while(!hasStopped)
             {
                 Thread.Yield();

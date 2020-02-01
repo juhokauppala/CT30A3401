@@ -1,4 +1,5 @@
-﻿using Shared;
+﻿using Server.Logging;
+using Shared;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -39,14 +40,19 @@ namespace Server.Server
 
         public Message[] GetMessages()
         {
-            return messages.ToArray();
+            Message[] returned = messages.ToArray();
+            messages.Clear();
+            return returned;
         }
 
         public void StartListeningAsync()
         {
+            listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
+            Logger.GetInstance().NewInfoLine("Started accepting TCP client asynchronoysly");
             listener.Start();
             waiter = listener.AcceptTcpClientAsync();
             thread = new Thread(new ThreadStart(Loop));
+            thread.Start();
         }
 
         public void WriteMessage(Message message)
@@ -78,7 +84,7 @@ namespace Server.Server
                     hasFoundClient = true;
                     ClientIsConnected = true;
                     client = waiter.Result;
-                    Console.WriteLine("Connection found client!");
+                    Logger.GetInstance().NewInfoLine("Client connected!");
                 }
 
                 if (client != null)
@@ -88,7 +94,7 @@ namespace Server.Server
                         messages.Add(message);
                 }
 
-                if (!client.Connected)
+                if (client != null && !client.Connected)
                     ClientIsConnected = false;
                 else
                     Thread.Yield();

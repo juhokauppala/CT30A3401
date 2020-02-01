@@ -1,4 +1,5 @@
 ﻿using Chat.Connection;
+using Shared;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -48,9 +49,8 @@ namespace Chat
         private void Data()
         {
             string message = "message";
-            Console.WriteLine($"Sending: {message}");
             Client client = new Client();
-            client.SendMessage(Encoding.UTF8.GetBytes(message));
+            client.SendMessage(message);
         }
 
         private void TextBlock_SelectionChanged_2()

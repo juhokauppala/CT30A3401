@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Server.Logging;
+using System;
 
 namespace Server
 {
@@ -12,11 +13,11 @@ namespace Server
             if (!(args.Length > 0 && int.TryParse(args[0], out int port)))
             {
                 port = 3401;
-                Console.WriteLine($"Using default port: {port}");
+                Logger.GetInstance().NewInfoLine($"Using default port: {port}");
             }
             else
             {
-                Console.WriteLine($"Using custom port: {port}");
+                Logger.GetInstance().NewInfoLine($"Using custom port: {port}");
             }
 
             server = new Server.Server();
@@ -25,7 +26,7 @@ namespace Server
 
         protected static void CtrlCHandler(object sender, ConsoleCancelEventArgs args)
         {
-            Console.WriteLine("Stopping server gracefully...");
+            Logger.GetInstance().NewInfoLine("Stopping server gracefully...");
             if (server != null)
                 server.Stop();
         }

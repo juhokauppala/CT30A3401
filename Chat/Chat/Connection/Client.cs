@@ -1,6 +1,8 @@
 ﻿
+using Shared;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -20,12 +22,20 @@ namespace Chat.Connection
         public Client()
         {
             client = new TcpClient(IP.ToString(), Port);
+            Debug.WriteLine($"Connected: {client.Connected}");
         }
 
-        public void SendMessage(byte[] message)
+        public void SendMessage(string message)
         {
+            Debug.WriteLine($"Sending message. Connected: {client.Connected}");
             NetworkStream stream = client.GetStream();
-            stream.Write(message, 0, message.Length);
+            Message msgObject = new Message() {
+                IsReceiverUser = false,
+                ReceiverName = "PublicChannel",
+                SenderName = "Client1",
+                Text = message
+            };
+            TcpIO.WriteStream(stream, msgObject);
         }
     }
 }
