@@ -12,6 +12,19 @@ namespace Shared
         public string Text { get; set; }
         public string SenderName { get; set; }
         public string ReceiverName { get; set; }
-        public bool IsReceiverUser { get; set; }
+        public MessageReceiver ReceiverType { get; set; }
+        public MessageType MessageType { get; set; }
+    }
+
+    public enum MessageType
+    {
+        ChatMessage,
+        LoginInformation
+    }
+
+    public enum MessageReceiver
+    {
+        Channel,
+        User
     }
 }

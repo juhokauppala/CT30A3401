@@ -46,13 +46,6 @@ namespace Chat
         {
         }
 
-        private void Data()
-        {
-            string message = "message";
-            Client client = new Client();
-            client.SendMessage(message);
-        }
-
         private void TextBlock_SelectionChanged_2()
         {
 
@@ -61,7 +54,7 @@ namespace Chat
         private void ConnectButton_Click(object sender, RoutedEventArgs e)
         {
             NameScreen.Visibility = Visibility.Collapsed;
-            Data();
+            
         }
     }
 }
