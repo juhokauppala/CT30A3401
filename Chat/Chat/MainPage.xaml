@@ -17,8 +17,8 @@
         <ListView x:Name="ChannelList" VerticalAlignment="Top" HorizontalAlignment="Left" Width="320" Margin="40,80,0,0" Height="220"/>
         <ListView x:Name="UserList" VerticalAlignment="Stretch" HorizontalAlignment="Left" Width="320" Margin="40,340,0,40"/>
         <Grid x:Name="NameScreen" Margin="40,40,40,40" Background="#FF290A0A" >
-            <TextBox HorizontalAlignment="Center" Margin="0,0,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Center" Width="200" Height="40" FontSize="20" PlaceholderText="Your name"/>
-            <Button x:Name="ConnectButton" Content="Connect" Margin="0,100,0,0" VerticalAlignment="Center" Width="160" Height="40" HorizontalAlignment="Center" FontSize="20" Click="ConnectButton_Click"/>
+            <TextBox x:Name="UserNameField" HorizontalAlignment="Center" Margin="0,0,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Center" Width="200" Height="40" FontSize="20" PlaceholderText="Your name" InputScope="Default"/>
+            <Button x:Name="ConnectButton" Content="Connect" Margin="0,100,0,0" VerticalAlignment="Center" Width="160" Height="40" HorizontalAlignment="Center" FontSize="20" Click="ConnectButton_Click" Background="#66FFFFFF" Foreground="#FF146523"/>
         </Grid>
     </Grid>
 </Page>

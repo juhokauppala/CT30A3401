@@ -11,6 +11,7 @@ namespace Server.Server
     {
         public void StartListeningAsync();
         public bool HasClient { get; }
+        public bool TestConnection();
 
         public bool HasNewMessage { get; }
         public Message[] GetMessages();

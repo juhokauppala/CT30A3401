@@ -19,7 +19,9 @@ namespace Shared
     public enum MessageType
     {
         ChatMessage,
-        LoginInformation
+        LoginInformation,
+        UserInformation,
+        Heartbeat
     }
 
     public enum MessageReceiver

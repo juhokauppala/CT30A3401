@@ -2,12 +2,15 @@
 using Shared;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
+using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.UI.Core.Preview;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
@@ -28,6 +31,8 @@ namespace Chat
         public MainPage()
         {
             this.InitializeComponent();
+            
+            Debug.WriteLine("Added Dispose to window close");
         }
 
         private void TextBlock_SelectionChanged(object sender, RoutedEventArgs e)
@@ -53,8 +58,13 @@ namespace Chat
 
         private void ConnectButton_Click(object sender, RoutedEventArgs e)
         {
-            NameScreen.Visibility = Visibility.Collapsed;
             
+            bool success = Client.GetInstance().Activate(UserNameField.Text);
+            if (success)
+            {
+                NameScreen.Visibility = Visibility.Collapsed;
+                Application.Current.Suspending += Client.GetInstance().Dispose;
+            }
         }
     }
 }

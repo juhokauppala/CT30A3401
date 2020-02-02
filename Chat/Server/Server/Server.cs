@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Sockets;
+using System.Linq;
 
 namespace Server.Server
 {
@@ -16,17 +17,21 @@ namespace Server.Server
         public static IPAddress IP { get; } = IPAddress.Parse("127.0.0.1");
 
         private List<IConnection> connections;
+        private List<IConnection> pendingConnections;
         private bool run = true;
         private bool hasStopped = false;
+
+        private object connectionListLock = new object();
 
         public Server()
         {
             connections = new List<IConnection>();
+            pendingConnections = new List<IConnection>();
         }
 
         public void Start(int port)
         {
-            IConnection waitingConnection = new Connection(IP, port);
+            IConnection waitingConnection = new Connection(this, IP, port);
             waitingConnection.StartListeningAsync();
             List<Message> newMessages = new List<Message>();
             List<IConnection> closed = new List<IConnection>();
@@ -41,9 +46,33 @@ namespace Server.Server
                 // Check for a new client
                 if (waitingConnection.HasClient)
                 {
-                    connections.Add(waitingConnection);
-                    waitingConnection = new Connection(IP, port);
+                    waitingConnection = new Connection(this, IP, port);
                     waitingConnection.StartListeningAsync();
+                }
+
+                // Add new users
+                if (pendingConnections.Count >= 1)
+                {
+                    lock (connectionListLock)
+                    {
+                        connections.AddRange(pendingConnections);
+
+                        foreach (IConnection pending in pendingConnections)
+                        {
+                            Message newUserInfo = new Message()
+                            {
+                                MessageType = MessageType.UserInformation,
+                                ReceiverName = pending.Name
+                            };
+
+                            foreach (IConnection user in connections)
+                            {
+                                user.WriteMessage(newUserInfo);
+                            }
+                        }
+
+                        pendingConnections.Clear();
+                    }
                 }
 
                 // Update messages and closed sockets
@@ -57,7 +86,7 @@ namespace Server.Server
                             Logger.GetInstance().NewInfoLine($"New message from {message.SenderName} to {message.ReceiverName}: {message.Text}");
                             newMessages.Add(message);
                         }
-                    } else if (!connection.HasClient)
+                    } else if (!connection.TestConnection())
                     {
                         closed.Add(connection);
                     }
@@ -66,6 +95,7 @@ namespace Server.Server
                 // Remove closed sockets
                 foreach (IConnection closedConnection in closed)
                 {
+                    Logger.GetInstance().NewInfoLine($"Removing: {closedConnection.Name}");
                     closedConnection.Dispose();
                     connections.Remove(closedConnection);
                 }
@@ -74,7 +104,7 @@ namespace Server.Server
                 // Deliver messages
                 foreach (Message newMessage in newMessages)
                 {
-                    if (newMessage.IsReceiverUser)
+                    if (newMessage.ReceiverType == MessageReceiver.User)
                     {
                         IConnection receiver = connections.Find(conn => conn.Name == newMessage.ReceiverName);
                         IConnection sender = connections.Find(conn => conn.Name == newMessage.SenderName);
@@ -116,6 +146,19 @@ namespace Server.Server
             while(!hasStopped)
             {
                 Thread.Yield();
+            }
+        }
+
+        public bool HasConnectionWithName(string name)
+        {
+            return connections.Select(conn => conn.Name == name).ToList().Count >= 1;
+        }
+
+        public void AddUser(Connection connection)
+        {
+            lock (connectionListLock)
+            {
+                pendingConnections.Add(connection);
             }
         }
     }

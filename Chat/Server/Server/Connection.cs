@@ -17,18 +17,29 @@ namespace Server.Server
         private Task<TcpClient> waiter = null;
         private Thread thread = null;
         private List<Message> messages = new List<Message>();
+        private Server server;
+        private DateTime aliveUntil;
 
-        public Connection(IPAddress IP, int port)
+        public Connection(Server parent, IPAddress IP, int port)
         {
             listener = new TcpListener(IP, port);
+            listener.Server.LingerState.Enabled = true;
+            listener.Server.LingerState.LingerTime = 0;
+            server = parent;
+            aliveUntil = DateTime.Now.AddSeconds(5);
         }
 
         public bool HasClient => client != null;
         public bool ClientIsConnected { get; private set; } = false;
 
+        public bool TestConnection()
+        {
+            return DateTime.Now <= aliveUntil;
+        }
+
         public bool HasNewMessage => messages.Count > 0;
 
-        public string Name => throw new NotImplementedException();
+        public string Name { get; private set; }
 
         public void Dispose()
         {
@@ -36,6 +47,7 @@ namespace Server.Server
                 client.Close();
 
             listener.Stop();
+            Logger.GetInstance().NewInfoLine($"Connection for {Name} closed!");
         }
 
         public Message[] GetMessages()
@@ -81,17 +93,33 @@ namespace Server.Server
                     waiter.IsCompleted &&
                     client == null)
                 {
-                    hasFoundClient = true;
-                    ClientIsConnected = true;
-                    client = waiter.Result;
-                    Logger.GetInstance().NewInfoLine("Client connected!");
+                    bool clientOK = AuthorizeClient(waiter.Result);
+                    
+                        hasFoundClient = true;
+                        ClientIsConnected = true;
+                        client = waiter.Result;
+                        Logger.GetInstance().NewInfoLine("Client connected!");
+                    if (!clientOK)
+                    {
+                        ClientIsConnected = false;
+                        break;
+                    }
                 }
 
                 if (client != null)
                 {
                     Message message = ReadClient(client);
                     if (message != null)
-                        messages.Add(message);
+                    {
+                        if (message.MessageType == MessageType.Heartbeat)
+                        {
+                            aliveUntil = DateTime.Now.AddSeconds(5);
+                        } else
+                        {
+                            messages.Add(message);
+                        }
+                    }
+                      
                 }
 
                 if (client != null && !client.Connected)
@@ -105,6 +133,35 @@ namespace Server.Server
         private Message ReadClient(TcpClient client)
         {
             return TcpIO.ReadStream(client.GetStream());
+        }
+
+        private bool AuthorizeClient(TcpClient client)
+        {
+            Logger.GetInstance().NewInfoLine("Started authenticating new client.");
+            Message login = null;
+            while (login == null)
+            {
+                login = TcpIO.ReadStream(client.GetStream());
+            }
+            bool loginOK = login.MessageType == MessageType.LoginInformation && !server.HasConnectionWithName(login.SenderName);
+
+            Logger.GetInstance().NewInfoLine($"Authentication result: {loginOK}");
+
+            if (loginOK)
+            {
+                Name = login.SenderName;
+                server.AddUser(this);
+                return true;
+            } else
+            {
+                Message response = new Message()
+                {
+                    MessageType = MessageType.UserInformation,
+                    ReceiverName = null
+                };
+                TcpIO.WriteStream(client.GetStream(), response);
+                return false;
+            }
         }
 
 #endregion

@@ -11,20 +11,36 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.ApplicationModel;
+using Windows.UI.Core;
+using Windows.UI.Core.Preview;
+using Windows.UI.Xaml;
 
 namespace Chat.Connection
 {
     class Client
     {
+        private static Client instance = null;
         public static IPAddress IP { get; } = IPAddress.Parse("127.0.0.1");
         public static int Port { get; } = 3401;
 
+        private bool keepListening = true;
+
+        public static Client GetInstance()
+        {
+            if (instance == null)
+                instance = new Client();
+
+            return instance;
+        }
 
         private TcpClient client;
 
-        public Client()
+        private Client()
         {
             client = new TcpClient(IP.ToString(), Port);
+            client.LingerState.Enabled = true;
+            client.LingerState.LingerTime = 0;
             Debug.WriteLine($"Connected: {client.Connected}");
         }
 
@@ -52,26 +68,39 @@ namespace Chat.Connection
         {
             NetworkStream stream = client.GetStream();
             Message newMessage;
-            while (client.Connected)
+            DateTime lastHeartbeat = SendHeartbeat();
+            while (client.Connected && keepListening)
             {
-                if (stream.DataAvailable && stream.CanRead)
+                if (client.Connected && stream.DataAvailable && stream.CanRead)
                 {
                     newMessage = TcpIO.ReadStream(stream);
                     ChatData.GetInstance().AddMessage(newMessage);
                     UIController.GetInstance().Refresh();
                 }
 
+                if (DateTime.Now.Subtract(lastHeartbeat).TotalSeconds >= 2)
+                {
+                    lastHeartbeat = SendHeartbeat();
+                }
+
                 Thread.Yield();
             }
         }
 
-        public void Activate(string name)
+        public bool Activate(string name)
         {
-            LogInAs(name);
-            StartListening();
+            if (LogInAs(name))
+            {
+                StartListening();
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
-        private void LogInAs(string name)
+        private bool LogInAs(string name)
         {
             Message logInMessage = new Message()
             {
@@ -82,6 +111,43 @@ namespace Chat.Connection
                 Text = null
             };
             TcpIO.WriteStream(client.GetStream(), logInMessage);
+            Message response = null;
+            Debug.WriteLine("Started login...");
+            while (response == null)
+            {
+                response = TcpIO.ReadStream(client.GetStream());
+                Thread.Yield();
+            }
+            Debug.WriteLine("Login-response received!");
+            if (response.MessageType == MessageType.UserInformation &&
+                response.ReceiverName != null)
+            {
+                return true;
+            } else
+            {
+                return false;
+            }
+        }
+
+        private DateTime SendHeartbeat()
+        {
+            TcpIO.WriteStream(client.GetStream(), new Message()
+            {
+                MessageType = MessageType.Heartbeat
+            });
+            return DateTime.Now;
+        }
+
+        public void Dispose(object sender, SuspendingEventArgs args)
+        {
+            keepListening = false;
+            Debug.WriteLine("Disposing client...");
+            if (client.Connected)
+            {
+                client.Client.Disconnect(false);
+                client.Dispose();
+                Debug.WriteLine("Closed!");
+            }
         }
     }
 }
