@@ -9,16 +9,21 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Grid Background="#FFE6C4C4">
-        <TextBox x:Name="TextField" HorizontalAlignment="Stretch" Margin="440,0,40,40" Text="" TextWrapping="Wrap" VerticalAlignment="Bottom" Height="40" PlaceholderText="Type your message here..." TextChanged="TextBox_TextChanged"/>
-        <ListView x:Name="Messages" Margin="440,40,40,120" Background="#4C000000" SelectionChanged="ListView_SelectionChanged" />
+        <TextBox x:Name="TextField" HorizontalAlignment="Stretch" Margin="440,0,150,120" Text="" TextWrapping="Wrap" VerticalAlignment="Bottom" Height="40" PlaceholderText="Type your message here..." TextChanged="TextBox_TextChanged"/>
+        <ListView x:Name="Messages" Margin="440,40,40,200" Background="#4C000000" SelectionChanged="ListView_SelectionChanged" />
         <Rectangle HorizontalAlignment="Left" Margin="0,0,0,0" Stroke="Black" VerticalAlignment="Stretch" Width="400" Fill="#FF701616"/>
         <TextBlock HorizontalAlignment="Left" Margin="40,40,0,0" Text="Channels" TextWrapping="Wrap" VerticalAlignment="Top" Width="300" Height="40" SelectionChanged="TextBlock_SelectionChanged_1" FontSize="30"/>
         <TextBlock HorizontalAlignment="Left" Margin="40,300,0,0" Text="Users" TextWrapping="Wrap" VerticalAlignment="Top" Width="300" Height="40" SelectionChanged="TextBlock_SelectionChanged_1" FontSize="30"/>
         <ListView x:Name="ChannelList" VerticalAlignment="Top" HorizontalAlignment="Left" Width="320" Margin="40,80,0,0" Height="220"/>
         <ListView x:Name="UserList" VerticalAlignment="Stretch" HorizontalAlignment="Left" Width="320" Margin="40,340,0,40"/>
-        <Grid x:Name="NameScreen" Margin="40,40,40,40" Background="#FF290A0A" >
-            <TextBox x:Name="UserNameField" HorizontalAlignment="Center" Margin="0,0,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Center" Width="200" Height="40" FontSize="20" PlaceholderText="Your name" InputScope="Default"/>
-            <Button x:Name="ConnectButton" Content="Connect" Margin="0,100,0,0" VerticalAlignment="Center" Width="160" Height="40" HorizontalAlignment="Center" FontSize="20" Click="ConnectButton_Click" Background="#66FFFFFF" Foreground="#FF146523"/>
+        
+        <TextBlock HorizontalAlignment="Left" Margin="440,0,0,40" Text="Sending to:" TextWrapping="Wrap" VerticalAlignment="Bottom" Height="40" Width="200" FontSize="30" FocusVisualPrimaryBrush="#FF631010" Foreground="#FF701616"/>
+        <TextBlock x:Name="SendingTo" HorizontalAlignment="Left" Margin="620,0,0,40" Text="Chuser" TextWrapping="Wrap" VerticalAlignment="Bottom" FocusVisualPrimaryBrush="#FF701616" Foreground="#FF701616" FontSize="30" Height="40"/>
+        <TextBox x:Name="SendTarget" HorizontalAlignment="Stretch" Margin="770,0,40,40" Text="" TextWrapping="Wrap" VerticalAlignment="Bottom" Foreground="#FF701616" Height="40" FontSize="20" PlaceholderText="No Channel or User selected"/>
+        <Button Content="Send" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,40,120" Height="40" Width="70" Foreground="#FF701616"/>
+        <Grid x:Name="NameScreen" Margin="40,40,40,40" Background="#FF290A0A" Grid.RowSpan="1" Grid.ColumnSpan="1" >
+            <TextBox x:Name="UserNameField" HorizontalAlignment="Center" Text="" TextWrapping="Wrap" VerticalAlignment="Center" Width="200" Height="40" FontSize="20" PlaceholderText="Your name" InputScope="Default" Grid.Column="1"/>
+            <Button x:Name="ConnectButton" Content="Connect" Margin="0,120,0,0" VerticalAlignment="Center" Width="160" Height="40" FontSize="20" Click="ConnectButton_Click" Background="#66FFFFFF" Foreground="#FF146523" Grid.Column="1" HorizontalAlignment="Center"/>
         </Grid>
     </Grid>
 </Page>

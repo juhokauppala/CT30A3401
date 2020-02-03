@@ -25,6 +25,16 @@ namespace Shared
             str += $"MessageType: {MessageType}\n";
             return str;
         }
+
+        public string Display()
+        {
+            return $"{SenderName}: {Text}";
+        }
+
+        public override string ToString()
+        {
+            return Display();
+        }
     }
 
     public enum MessageType

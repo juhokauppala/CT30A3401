@@ -20,6 +20,7 @@ namespace Server.Server
         private List<Connection> pendingConnections;
         private bool run = true;
         private bool hasStopped = false;
+        private int messageCounter;
 
         private object connectionListLock = new object();
 
@@ -27,6 +28,7 @@ namespace Server.Server
         {
             connections = new List<Connection>();
             pendingConnections = new List<Connection>();
+            messageCounter = 0;
         }
 
         public void Start(int port)
@@ -83,6 +85,7 @@ namespace Server.Server
                         Message[] messages = connection.GetMessages();
                         foreach (Message message in messages)
                         {
+                            messageCounter++;
                             Logger.GetInstance().NewInfoLine($"New message from {message.SenderName} to {message.ReceiverName}: {message.Text}");
                             newMessages.Add(message);
                         }
@@ -130,7 +133,7 @@ namespace Server.Server
                 timeToExecute = stopwatch.Elapsed;
 
                 
-                logger.UpdateStaticLine(connections.Count, timeToExecute, -1);
+                logger.UpdateStaticLine(connections.Count, timeToExecute, messageCounter);
 
                 Thread.Yield();
             }

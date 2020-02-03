@@ -13,6 +13,9 @@ namespace Chat.Data
         private Dictionary<string, Channel> channels;
         private Dictionary<string, Channel> directMessages;
 
+        public ICollection<Channel> Channels { get => channels.Values; }
+        public ICollection<Channel> Users { get => directMessages.Values; }
+
         public static ChatData GetInstance()
         {
             if (singleton == null)
@@ -37,7 +40,7 @@ namespace Chat.Data
                 dictionary[message.ReceiverName].AddMessage(message);
             } else
             {
-                Channel newChannel = new Channel(message.ReceiverName);
+                Channel newChannel = new Channel(message.ReceiverName, message.ReceiverType);
                 newChannel.AddMessage(message);
                 dictionary.Add(message.ReceiverName, newChannel);
             }
@@ -61,10 +64,16 @@ namespace Chat.Data
                     }
                     break;
                 case MessageType.UserInformation:
+                    AddUser(message.ReceiverName);
                     break;
                 default:
                     throw new Exception($"Unknown Message type: {message.MessageType}");
             }
+        }
+
+        public void AddUser(string name)
+        {
+            directMessages.Add(name, new Channel(name, MessageReceiver.User));
         }
     }
 }

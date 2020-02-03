@@ -1,4 +1,5 @@
 ﻿using Chat.Connection;
+using Chat.UI;
 using Shared;
 using System;
 using System.Collections.Generic;
@@ -31,6 +32,7 @@ namespace Chat
         public MainPage()
         {
             this.InitializeComponent();
+            InitUIControls(UIController.GetInstance());
         }
 
         private void TextBlock_SelectionChanged(object sender, RoutedEventArgs e)
@@ -62,6 +64,16 @@ namespace Chat
             {
                 NameScreen.Visibility = Visibility.Collapsed;
             }
+        }
+
+        private void InitUIControls(UIController controller)
+        {
+            controller.ChannelList = ChannelList;
+            controller.UserList = UserList;
+            controller.MessageBox = Messages;
+            controller.MessageField = TextField;
+            controller.TargetChannel = SendTarget;
+            controller.ChannelType = SendingTo;
         }
     }
 }
