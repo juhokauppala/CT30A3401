@@ -120,7 +120,7 @@ namespace Chat.Connection
             }
             Debug.WriteLine("Login-response received!");
             if (response.MessageType == MessageType.UserInformation &&
-                response.ReceiverName != null)
+                response.ReceiverName == name)
             {
                 return true;
             } else

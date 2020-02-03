@@ -79,7 +79,7 @@ namespace Server.Server
 
         public void WriteMessage(Message message)
         {
-            if (State == ConnectionState.Alive)
+            if (State == ConnectionState.Alive || State == ConnectionState.Authenticating)
             {
                 TcpIO.WriteStream(client.GetStream(), message);
             }
@@ -150,7 +150,7 @@ namespace Server.Server
             bool loginOK = (login.MessageType == MessageType.LoginInformation) && (!server.HasConnectionWithName(login.SenderName));
             Logger.GetInstance().NewInfoLine(login.ToDebugString());
 
-            Logger.GetInstance().NewInfoLine($"Authentication result: {loginOK}");
+            Logger.GetInstance().NewInfoLine($"Authentication ok for {login.SenderName}: {loginOK}");
 
             if (loginOK)
             {
