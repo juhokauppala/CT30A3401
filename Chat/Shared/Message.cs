@@ -14,6 +14,17 @@ namespace Shared
         public string ReceiverName { get; set; }
         public MessageReceiver ReceiverType { get; set; }
         public MessageType MessageType { get; set; }
+
+        public string ToDebugString()
+        {
+            string str = "";
+            str += $"SenderName: {SenderName}\n";
+            str += $"Receivername: {ReceiverName}\n";
+            str += $"Text: {Text}\n";
+            str += $"ReceiverType: {ReceiverType}\n";
+            str += $"MessageType: {MessageType}\n";
+            return str;
+        }
     }
 
     public enum MessageType

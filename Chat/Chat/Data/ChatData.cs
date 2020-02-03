@@ -29,10 +29,12 @@ namespace Chat.Data
 
         private void AddMessageToDict(Message message, Dictionary<string, Channel> dictionary)
         {
-            Channel target = dictionary[message.ReceiverName];
-            if (target != null)
+            string key = message.ReceiverType == MessageReceiver.User ? message.SenderName : message.ReceiverName;
+            bool channelExists = dictionary.ContainsKey(key);
+            
+            if (channelExists)
             {
-                target.AddMessage(message);
+                dictionary[message.ReceiverName].AddMessage(message);
             } else
             {
                 Channel newChannel = new Channel(message.ReceiverName);
@@ -43,16 +45,25 @@ namespace Chat.Data
 
         public void AddMessage(Message message)
         {
-            switch (message.ReceiverType)
+            switch (message.MessageType)
             {
-                case MessageReceiver.Channel:
-                    AddMessageToDict(message, channels);
+                case MessageType.ChatMessage:
+                    switch (message.ReceiverType)
+                    {
+                        case MessageReceiver.Channel:
+                            AddMessageToDict(message, channels);
+                            break;
+                        case MessageReceiver.User:
+                            AddMessageToDict(message, directMessages);
+                            break;
+                        default:
+                            throw new Exception("Unknown ReceiverType");
+                    }
                     break;
-                case MessageReceiver.User:
-                    AddMessageToDict(message, directMessages);
+                case MessageType.UserInformation:
                     break;
                 default:
-                    throw new Exception("Unknown ReceiverType");
+                    throw new Exception($"Unknown Message type: {message.MessageType}");
             }
         }
     }

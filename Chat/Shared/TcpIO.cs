@@ -28,7 +28,7 @@ namespace Shared
                 return MessageEncoder.Decode(bytes);
             } else
             {
-                throw new Exception("NetworkStream not readable");
+                return null;
             }
         }
 

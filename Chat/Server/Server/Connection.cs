@@ -10,8 +10,10 @@ using System.Threading.Tasks;
 
 namespace Server.Server
 {
-    class Connection : IConnection
+    class Connection
     {
+        public ConnectionState State;
+
         private TcpListener listener = null;
         private TcpClient client = null;
         private Task<TcpClient> waiter = null;
@@ -20,21 +22,26 @@ namespace Server.Server
         private Server server;
         private DateTime aliveUntil;
 
+        private object aliveLock = new object();
+
         public Connection(Server parent, IPAddress IP, int port)
         {
             listener = new TcpListener(IP, port);
             listener.Server.LingerState.Enabled = true;
             listener.Server.LingerState.LingerTime = 0;
             server = parent;
-            aliveUntil = DateTime.Now.AddSeconds(5);
+            State = ConnectionState.Waiting;
         }
 
-        public bool HasClient => client != null;
-        public bool ClientIsConnected { get; private set; } = false;
-
-        public bool TestConnection()
+        public bool IsAlive()
         {
-            return DateTime.Now <= aliveUntil;
+            lock (aliveLock)
+            {
+                if (DateTime.Now > aliveUntil)
+                    Logger.GetInstance().NewInfoLine($"No heartbeat! (AliveUntil: {aliveUntil.ToLongTimeString()}) (Time now: {DateTime.Now.ToLongTimeString()})");
+
+                return DateTime.Now <= aliveUntil;
+            }
         }
 
         public bool HasNewMessage => messages.Count > 0;
@@ -43,11 +50,14 @@ namespace Server.Server
 
         public void Dispose()
         {
-            if (client.Connected)
-                client.Close();
+            if (State != ConnectionState.Disposed)
+            {
+                State = ConnectionState.Disposed;
+                if (client.Connected)
+                    client.Close();
 
-            listener.Stop();
-            Logger.GetInstance().NewInfoLine($"Connection for {Name} closed!");
+                Logger.GetInstance().NewInfoLine($"Disposing {Name}");
+            }
         }
 
         public Message[] GetMessages()
@@ -59,7 +69,7 @@ namespace Server.Server
 
         public void StartListeningAsync()
         {
-            listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
+            //listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
             Logger.GetInstance().NewInfoLine("Started accepting TCP client asynchronoysly");
             listener.Start();
             waiter = listener.AcceptTcpClientAsync();
@@ -69,51 +79,44 @@ namespace Server.Server
 
         public void WriteMessage(Message message)
         {
-            if (HasClient && ClientIsConnected)
+            if (State == ConnectionState.Alive)
             {
                 TcpIO.WriteStream(client.GetStream(), message);
             }
-        }
-
-        private void EndLoop()
-        {
-            if (thread.IsAlive)
-                thread.Abort();
-            Dispose();
         }
 
 #region ThreadLoop
 
         protected void Loop()
         {
-            bool hasFoundClient = false;
-            while (ClientIsConnected || !hasFoundClient)
+            while (State != ConnectionState.Disposed)
             {
-                if (!hasFoundClient &&
-                    waiter.IsCompleted &&
-                    client == null)
+                if (waiter.IsCompleted &&
+                    State == ConnectionState.Waiting)
                 {
-                    bool clientOK = AuthorizeClient(waiter.Result);
-                    
-                        hasFoundClient = true;
-                        ClientIsConnected = true;
-                        client = waiter.Result;
-                        Logger.GetInstance().NewInfoLine("Client connected!");
+                    listener.Stop();
+                    State = ConnectionState.Authenticating;
+                    bool clientOK = AuthenticateClient(waiter.Result);
+                    client = waiter.Result;
+                    Logger.GetInstance().NewInfoLine("Client connected!");
                     if (!clientOK)
                     {
-                        ClientIsConnected = false;
                         break;
                     }
+                    State = ConnectionState.Alive;
                 }
 
-                if (client != null)
+                if (State == ConnectionState.Alive)
                 {
                     Message message = ReadClient(client);
                     if (message != null)
                     {
                         if (message.MessageType == MessageType.Heartbeat)
                         {
-                            aliveUntil = DateTime.Now.AddSeconds(5);
+                            lock (aliveLock)
+                            {
+                                aliveUntil = DateTime.Now.AddSeconds(5);
+                            }
                         } else
                         {
                             messages.Add(message);
@@ -122,34 +125,37 @@ namespace Server.Server
                       
                 }
 
-                if (client != null && !client.Connected)
-                    ClientIsConnected = false;
-                else
-                    Thread.Yield();
+                Thread.Yield();
             }
-            EndLoop();
+            Dispose();
         }
 
         private Message ReadClient(TcpClient client)
         {
-            return TcpIO.ReadStream(client.GetStream());
+            Message message = TcpIO.ReadStream(client.GetStream());
+            //if (message != null)
+            //    Logger.GetInstance().NewInfoLine(message.ToDebugString());
+            return message;
         }
 
-        private bool AuthorizeClient(TcpClient client)
+        private bool AuthenticateClient(TcpClient client)
         {
             Logger.GetInstance().NewInfoLine("Started authenticating new client.");
             Message login = null;
             while (login == null)
             {
                 login = TcpIO.ReadStream(client.GetStream());
+                Thread.Yield();
             }
-            bool loginOK = login.MessageType == MessageType.LoginInformation && !server.HasConnectionWithName(login.SenderName);
+            bool loginOK = (login.MessageType == MessageType.LoginInformation) && (!server.HasConnectionWithName(login.SenderName));
+            Logger.GetInstance().NewInfoLine(login.ToDebugString());
 
             Logger.GetInstance().NewInfoLine($"Authentication result: {loginOK}");
 
             if (loginOK)
             {
                 Name = login.SenderName;
+                aliveUntil = DateTime.Now.AddSeconds(5);
                 server.AddUser(this);
                 return true;
             } else
@@ -165,5 +171,13 @@ namespace Server.Server
         }
 
 #endregion
+    }
+
+    public enum ConnectionState
+    {
+        Waiting,
+        Authenticating,
+        Alive,
+        Disposed
     }
 }

@@ -22,7 +22,7 @@ namespace Chat.Connection
     {
         private static Client instance = null;
         public static IPAddress IP { get; } = IPAddress.Parse("127.0.0.1");
-        public static int Port { get; } = 3401;
+        public static int Port { get; } = 50000;
 
         private bool keepListening = true;
 
@@ -108,7 +108,7 @@ namespace Chat.Connection
                 ReceiverType = MessageReceiver.User,
                 ReceiverName = null,
                 SenderName = name,
-                Text = null
+                Text = $"My port is: {client.Client.LocalEndPoint.ToString()}"
             };
             TcpIO.WriteStream(client.GetStream(), logInMessage);
             Message response = null;

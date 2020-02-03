@@ -31,8 +31,6 @@ namespace Chat
         public MainPage()
         {
             this.InitializeComponent();
-            
-            Debug.WriteLine("Added Dispose to window close");
         }
 
         private void TextBlock_SelectionChanged(object sender, RoutedEventArgs e)
@@ -63,7 +61,6 @@ namespace Chat
             if (success)
             {
                 NameScreen.Visibility = Visibility.Collapsed;
-                Application.Current.Suspending += Client.GetInstance().Dispose;
             }
         }
     }

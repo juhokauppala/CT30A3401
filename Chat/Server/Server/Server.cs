@@ -16,8 +16,8 @@ namespace Server.Server
     {
         public static IPAddress IP { get; } = IPAddress.Parse("127.0.0.1");
 
-        private List<IConnection> connections;
-        private List<IConnection> pendingConnections;
+        private List<Connection> connections;
+        private List<Connection> pendingConnections;
         private bool run = true;
         private bool hasStopped = false;
 
@@ -25,16 +25,16 @@ namespace Server.Server
 
         public Server()
         {
-            connections = new List<IConnection>();
-            pendingConnections = new List<IConnection>();
+            connections = new List<Connection>();
+            pendingConnections = new List<Connection>();
         }
 
         public void Start(int port)
         {
-            IConnection waitingConnection = new Connection(this, IP, port);
+            Connection waitingConnection = new Connection(this, IP, port);
             waitingConnection.StartListeningAsync();
             List<Message> newMessages = new List<Message>();
-            List<IConnection> closed = new List<IConnection>();
+            List<Connection> closed = new List<Connection>();
             Stopwatch stopwatch = new Stopwatch();
             TimeSpan timeToExecute;
             Logger logger = Logger.GetInstance();
@@ -44,7 +44,7 @@ namespace Server.Server
                 stopwatch.Restart();
 
                 // Check for a new client
-                if (waitingConnection.HasClient)
+                if (waitingConnection.State == ConnectionState.Alive)
                 {
                     waitingConnection = new Connection(this, IP, port);
                     waitingConnection.StartListeningAsync();
@@ -57,7 +57,7 @@ namespace Server.Server
                     {
                         connections.AddRange(pendingConnections);
 
-                        foreach (IConnection pending in pendingConnections)
+                        foreach (Connection pending in pendingConnections)
                         {
                             Message newUserInfo = new Message()
                             {
@@ -65,7 +65,7 @@ namespace Server.Server
                                 ReceiverName = pending.Name
                             };
 
-                            foreach (IConnection user in connections)
+                            foreach (Connection user in connections)
                             {
                                 user.WriteMessage(newUserInfo);
                             }
@@ -76,7 +76,7 @@ namespace Server.Server
                 }
 
                 // Update messages and closed sockets
-                foreach (IConnection connection in connections)
+                foreach (Connection connection in connections)
                 {
                     if (connection.HasNewMessage)
                     {
@@ -86,17 +86,19 @@ namespace Server.Server
                             Logger.GetInstance().NewInfoLine($"New message from {message.SenderName} to {message.ReceiverName}: {message.Text}");
                             newMessages.Add(message);
                         }
-                    } else if (!connection.TestConnection())
+                    } else if (!connection.IsAlive() || connection.State == ConnectionState.Disposed)
                     {
                         closed.Add(connection);
                     }
                 }
 
                 // Remove closed sockets
-                foreach (IConnection closedConnection in closed)
+                foreach (Connection closedConnection in closed)
                 {
-                    Logger.GetInstance().NewInfoLine($"Removing: {closedConnection.Name}");
-                    closedConnection.Dispose();
+                    Logger.GetInstance().NewInfoLine($"Removing {closedConnection.Name} from server's list.");
+                    if (closedConnection.State != ConnectionState.Disposed)
+                        closedConnection.Dispose();
+
                     connections.Remove(closedConnection);
                 }
                 closed.Clear();
@@ -106,8 +108,8 @@ namespace Server.Server
                 {
                     if (newMessage.ReceiverType == MessageReceiver.User)
                     {
-                        IConnection receiver = connections.Find(conn => conn.Name == newMessage.ReceiverName);
-                        IConnection sender = connections.Find(conn => conn.Name == newMessage.SenderName);
+                        Connection receiver = connections.Find(conn => conn.Name == newMessage.ReceiverName);
+                        Connection sender = connections.Find(conn => conn.Name == newMessage.SenderName);
 
                         if (receiver != null)
                             receiver.WriteMessage(newMessage);
@@ -117,7 +119,7 @@ namespace Server.Server
 
                     } else
                     {
-                        foreach (IConnection receiver in connections)
+                        foreach (Connection receiver in connections)
                         {
                             receiver.WriteMessage(newMessage);
                         }
@@ -132,7 +134,7 @@ namespace Server.Server
 
                 Thread.Yield();
             }
-            foreach (IConnection connection in connections)
+            foreach (Connection connection in connections)
             {
                 connection.Dispose();
             }
@@ -151,7 +153,7 @@ namespace Server.Server
 
         public bool HasConnectionWithName(string name)
         {
-            return connections.Select(conn => conn.Name == name).ToList().Count >= 1;
+            return connections.Where(conn => conn.Name == name).ToList().Count >= 1;
         }
 
         public void AddUser(Connection connection)

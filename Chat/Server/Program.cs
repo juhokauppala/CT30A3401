@@ -12,7 +12,7 @@ namespace Server
 
             if (!(args.Length > 0 && int.TryParse(args[0], out int port)))
             {
-                port = 3401;
+                port = 50000;
                 Logger.GetInstance().NewInfoLine($"Using default port: {port}");
             }
             else
