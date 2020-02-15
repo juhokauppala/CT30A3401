@@ -43,50 +43,76 @@ namespace Chat.UI
                 {
                     ChatData data = ChatData.GetInstance();
                     SetChannels(data);
-                    SetSelected();
+                    UpdateSelectedChannelMessages();
                 });
         }
 
         private void SetChannels(ChatData data)
         {
             ItemCollection users = UserList.Items;
-            users.Clear();
-            foreach (Channel channel in data.Users)
+            IEnumerable<object> deletedUsers = users.Except(data.Users);
+            IEnumerable<object> newUsers = data.Users.Except(users);
+            
+            foreach (object deletedUser in deletedUsers)
             {
-                users.Add(channel);
+                users.Remove(deletedUser);
+            }
+            foreach (object newUser in newUsers)
+            {
+                users.Add(newUser);
             }
 
             ItemCollection channels = ChannelList.Items;
-            channels.Clear();
-            foreach (Channel channel in data.Channels)
+            IEnumerable<object> newChannels = data.Channels.Except(channels);
+
+            foreach (object newChannel in newChannels)
             {
-                channels.Add(channel);
+                users.Add(newChannel);
             }
         }
 
-        private void SetSelected()
+        private void SetSelectedChannel(Channel newSelected)
         {
-            if (selected == null)
+            if (newSelected == null || newSelected == selected)
                 return;
 
-            ItemCollection messages = MessageBox.Items;
-            messages.Clear();
-
-            foreach(Message message in selected.Messages)
-            {
-                messages.Add(message);
-            }
-
-            ChannelType.Text = selected.ChannelType.ToString();
-            TargetChannel.Text = selected.Name;
-
-            bool isTargetChannelFrozen = selected.ChannelType == MessageReceiver.User;
-            TargetChannel.IsReadOnly = isTargetChannelFrozen;
+            UpdateSelectedChannelMessages();
         }
 
-        public void SelectChannel(Channel channel)
+        private void UpdateSelectedChannelMessages()
         {
-            selected = channel;
+            ItemCollection messages = MessageBox.Items;
+            if (selected == null || selected.Messages == null)
+                return;
+
+            object[] newMessages = selected.Messages.Except(messages).ToArray();
+
+            foreach (object newMessage in newMessages)
+            {
+                messages.Add(newMessage);
+            }
+        }
+
+        public void SelectChannel(string channelName, MessageReceiver channelType)
+        {
+            Channel newSelected;
+            if (channelType == MessageReceiver.Channel)
+            {
+                newSelected = ChatData.GetInstance().Channels.Where(channel => channel.Name == channelName).First();
+            } else if (channelType == MessageReceiver.User)
+            {
+                newSelected = ChatData.GetInstance().Users.Where(channel => channel.Name == channelName).First();
+            } else
+            {
+                throw new Exception($"Unknown MessageType: {channelType}");
+            }
+            SetSelectedChannel(newSelected);
+
+            ChannelType.Text = newSelected.ChannelType.ToString();
+            TargetChannel.Text = newSelected.Name;
+
+            bool isTargetChannelFrozen = newSelected.ChannelType == MessageReceiver.User;
+            TargetChannel.IsReadOnly = isTargetChannelFrozen;
         }
 
     }

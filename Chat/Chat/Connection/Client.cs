@@ -119,7 +119,7 @@ namespace Chat.Connection
                 Thread.Yield();
             }
             Debug.WriteLine("Login-response received!");
-            if (response.MessageType == MessageType.UserInformation &&
+            if (response.MessageType == MessageType.LoginInformation &&
                 response.ReceiverName == name)
             {
                 return true;

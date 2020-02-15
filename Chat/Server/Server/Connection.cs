@@ -81,7 +81,13 @@ namespace Server.Server
         {
             if (State == ConnectionState.Alive || State == ConnectionState.Authenticating)
             {
-                TcpIO.WriteStream(client.GetStream(), message);
+                try
+                {
+                    TcpIO.WriteStream(client.GetStream(), message);
+                } catch (Exception e)
+                {
+                    //Logger.GetInstance().NewInfoLine(e.ToString());
+                }
             }
         }
 
@@ -104,6 +110,7 @@ namespace Server.Server
                         break;
                     }
                     State = ConnectionState.Alive;
+                    server.AddUser(this);
                 }
 
                 if (State == ConnectionState.Alive)
@@ -132,10 +139,16 @@ namespace Server.Server
 
         private Message ReadClient(TcpClient client)
         {
-            Message message = TcpIO.ReadStream(client.GetStream());
-            //if (message != null)
-            //    Logger.GetInstance().NewInfoLine(message.ToDebugString());
-            return message;
+            try
+            {
+                Message message = TcpIO.ReadStream(client.GetStream());
+                //if (message != null)
+                //    Logger.GetInstance().NewInfoLine(message.ToDebugString());
+                return message;
+            } catch (Exception e)
+            {
+                return null;
+            }
         }
 
         private bool AuthenticateClient(TcpClient client)
@@ -152,22 +165,26 @@ namespace Server.Server
 
             Logger.GetInstance().NewInfoLine($"Authentication ok for {login.SenderName}: {loginOK}");
 
+            Message response;
             if (loginOK)
             {
                 Name = login.SenderName;
                 aliveUntil = DateTime.Now.AddSeconds(5);
-                server.AddUser(this);
-                return true;
+                response = new Message()
+                {
+                    MessageType = MessageType.LoginInformation,
+                    ReceiverName = Name
+                };
             } else
             {
-                Message response = new Message()
+                response = new Message()
                 {
-                    MessageType = MessageType.UserInformation,
+                    MessageType = MessageType.LoginInformation,
                     ReceiverName = null
                 };
-                TcpIO.WriteStream(client.GetStream(), response);
-                return false;
             }
+            TcpIO.WriteStream(client.GetStream(), response);
+            return loginOK;
         }
 
 #endregion

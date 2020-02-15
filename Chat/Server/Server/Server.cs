@@ -59,20 +59,6 @@ namespace Server.Server
                     {
                         connections.AddRange(pendingConnections);
 
-                        foreach (Connection pending in pendingConnections)
-                        {
-                            Message newUserInfo = new Message()
-                            {
-                                MessageType = MessageType.UserInformation,
-                                ReceiverName = pending.Name
-                            };
-
-                            foreach (Connection user in connections)
-                            {
-                                user.WriteMessage(newUserInfo);
-                            }
-                        }
-
                         pendingConnections.Clear();
                     }
                 }
@@ -106,25 +92,51 @@ namespace Server.Server
                 }
                 closed.Clear();
 
+                string userList = "";
+                lock (connectionListLock)
+                {
+                    foreach (Connection connection in connections)
+                    {
+                        if (userList.Length > 0)
+                            userList += Message.UserListDelimiter;
+
+                        userList += connection.Name;
+                    }
+                }
+
+                Message userListMessage = new Message()
+                {
+                    Text = userList,
+                    MessageType = MessageType.UserList
+                };
+                // Deliver userlist
+                foreach (Connection connection in connections)
+                {
+                    connection.WriteMessage(userListMessage);
+                }
+
                 // Deliver messages
                 foreach (Message newMessage in newMessages)
                 {
-                    if (newMessage.ReceiverType == MessageReceiver.User)
+                    lock (connectionListLock)
                     {
-                        Connection receiver = connections.Find(conn => conn.Name == newMessage.ReceiverName);
-                        Connection sender = connections.Find(conn => conn.Name == newMessage.SenderName);
-
-                        if (receiver != null)
-                            receiver.WriteMessage(newMessage);
-                        
-                        if (sender != null)
-                            sender.WriteMessage(newMessage);
-
-                    } else
-                    {
-                        foreach (Connection receiver in connections)
+                        if (newMessage.ReceiverType == MessageReceiver.User)
                         {
-                            receiver.WriteMessage(newMessage);
+                            Connection receiver = connections.Find(conn => conn.Name == newMessage.ReceiverName);
+                            Connection sender = connections.Find(conn => conn.Name == newMessage.SenderName);
+
+                            if (receiver != null)
+                                receiver.WriteMessage(newMessage);
+                        
+                            if (sender != null)
+                                sender.WriteMessage(newMessage);
+
+                        } else
+                        {
+                            foreach (Connection receiver in connections)
+                            {
+                                receiver.WriteMessage(newMessage);
+                            }
                         }
                     }
                 }
@@ -135,7 +147,7 @@ namespace Server.Server
                 
                 logger.UpdateStaticLine(connections.Count, timeToExecute, messageCounter);
 
-                Thread.Yield();
+                Thread.Sleep(50);
             }
             foreach (Connection connection in connections)
             {

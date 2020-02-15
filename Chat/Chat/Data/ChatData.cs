@@ -63,17 +63,28 @@ namespace Chat.Data
                             throw new Exception("Unknown ReceiverType");
                     }
                     break;
-                case MessageType.UserInformation:
-                    AddUser(message.ReceiverName);
+                case MessageType.UserList:
+                    UpdateUserList(message.Text);
                     break;
                 default:
                     throw new Exception($"Unknown Message type: {message.MessageType}");
             }
         }
 
-        public void AddUser(string name)
+        public void UpdateUserList(string userString)
         {
-            directMessages.Add(name, new Channel(name, MessageReceiver.User));
+            string[] users = userString.Split(Message.UserListDelimiter);
+            string[] newUsers = users.Except(directMessages.Keys).ToArray();
+            string[] deletedUsers = directMessages.Keys.Except(users).ToArray();
+
+            foreach (string deleted in deletedUsers)
+            {
+                directMessages.Remove(deleted);
+            }
+            foreach (string newUser in newUsers)
+            {
+                directMessages.Add(newUser, new Channel(newUser, MessageReceiver.User));
+            }
         }
     }
 }

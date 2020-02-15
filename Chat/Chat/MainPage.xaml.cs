@@ -1,4 +1,5 @@
 ﻿using Chat.Connection;
+using Chat.Data;
 using Chat.UI;
 using Shared;
 using System;
@@ -51,9 +52,14 @@ namespace Chat
         {
         }
 
-        private void TextBlock_SelectionChanged_2()
+        private void ClickChannel(object sender, ItemClickEventArgs e)
         {
+            UIController.GetInstance().SelectChannel(((Channel)e.ClickedItem).Name, MessageReceiver.Channel);
+        }
 
+        private void ClickUser(object sender, ItemClickEventArgs e)
+        {
+            UIController.GetInstance().SelectChannel(((Channel)e.ClickedItem).Name, MessageReceiver.User);
         }
 
         private void ConnectButton_Click(object sender, RoutedEventArgs e)

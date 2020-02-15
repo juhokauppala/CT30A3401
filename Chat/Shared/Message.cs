@@ -9,6 +9,9 @@ namespace Shared
     [Serializable]
     public class Message
     {
+        [NonSerialized]
+        public static readonly string UserListDelimiter = ";";
+
         public string Text { get; set; }
         public string SenderName { get; set; }
         public string ReceiverName { get; set; }
@@ -41,7 +44,7 @@ namespace Shared
     {
         ChatMessage,
         LoginInformation,
-        UserInformation,
+        UserList,
         Heartbeat
     }
 
