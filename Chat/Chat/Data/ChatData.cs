@@ -1,6 +1,9 @@
-﻿using Shared;
+﻿using Chat.Connection;
+using Chat.UI;
+using Shared;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -28,22 +31,34 @@ namespace Chat.Data
         {
             channels = new Dictionary<string, Channel>();
             directMessages = new Dictionary<string, Channel>();
+
+            channels.Add("Default", new Channel("Default", MessageReceiver.Channel));
         }
 
         private void AddMessageToDict(Message message, Dictionary<string, Channel> dictionary)
         {
-            string key = message.ReceiverType == MessageReceiver.User ? message.SenderName : message.ReceiverName;
+            string key = message.ReceiverType == MessageReceiver.User ? GetChannelKeyFromPrivateMessage(message) : message.ReceiverName;
             bool channelExists = dictionary.ContainsKey(key);
             
             if (channelExists)
             {
-                dictionary[message.ReceiverName].AddMessage(message);
+                dictionary[key].AddMessage(message);
             } else
             {
-                Channel newChannel = new Channel(message.ReceiverName, message.ReceiverType);
+                Channel newChannel = new Channel(key, message.ReceiverType);
                 newChannel.AddMessage(message);
-                dictionary.Add(message.ReceiverName, newChannel);
+                dictionary.Add(key, newChannel);
             }
+            UIController.GetInstance().Refresh();
+        }
+
+        private string GetChannelKeyFromPrivateMessage(Message message)
+        {
+            if (message.SenderName != Client.GetInstance().Name)
+            {
+                return message.SenderName;
+            }
+            return message.ReceiverName;
         }
 
         public void AddMessage(Message message)
@@ -51,6 +66,7 @@ namespace Chat.Data
             switch (message.MessageType)
             {
                 case MessageType.ChatMessage:
+                    Debug.WriteLine("Received Message!");
                     switch (message.ReceiverType)
                     {
                         case MessageReceiver.Channel:

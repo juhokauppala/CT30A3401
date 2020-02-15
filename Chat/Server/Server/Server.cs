@@ -128,7 +128,7 @@ namespace Server.Server
                             if (receiver != null)
                                 receiver.WriteMessage(newMessage);
                         
-                            if (sender != null)
+                            if (sender != null && sender != receiver)
                                 sender.WriteMessage(newMessage);
 
                         } else

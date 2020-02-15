@@ -86,7 +86,7 @@ namespace Server.Server
                     TcpIO.WriteStream(client.GetStream(), message);
                 } catch (Exception e)
                 {
-                    //Logger.GetInstance().NewInfoLine(e.ToString());
+                    //Logger.GetInstance().NewInfoLine($"Failed to send info to: {Name}");
                 }
             }
         }

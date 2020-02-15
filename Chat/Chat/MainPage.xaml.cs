@@ -10,6 +10,7 @@ using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using Windows.ApplicationModel.Activation;
+using Windows.ApplicationModel.Core;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.UI.Core.Preview;
@@ -36,22 +37,6 @@ namespace Chat
             InitUIControls(UIController.GetInstance());
         }
 
-        private void TextBlock_SelectionChanged(object sender, RoutedEventArgs e)
-        {
-        }
-
-        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-        }
-
-        private void ListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-        }
-
-        private void TextBlock_SelectionChanged_1(object sender, RoutedEventArgs e)
-        {
-        }
-
         private void ClickChannel(object sender, ItemClickEventArgs e)
         {
             UIController.GetInstance().SelectChannel(((Channel)e.ClickedItem).Name, MessageReceiver.Channel);
@@ -72,6 +57,14 @@ namespace Chat
             }
         }
 
+        private void SendButton_Click(object sender, RoutedEventArgs e)
+        {
+            string message = TextField.Text;
+            string receiver = SendTarget.Text;
+            MessageReceiver receiverType = (MessageReceiver)Enum.Parse(typeof(MessageReceiver), SendingTo.Text);
+            Client.GetInstance().SendMessage(message, receiver, receiverType);
+        }
+
         private void InitUIControls(UIController controller)
         {
             controller.ChannelList = ChannelList;
@@ -80,6 +73,7 @@ namespace Chat
             controller.MessageField = TextField;
             controller.TargetChannel = SendTarget;
             controller.ChannelType = SendingTo;
+            controller.UserName = UserName;
         }
     }
 }

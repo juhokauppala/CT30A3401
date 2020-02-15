@@ -18,6 +18,7 @@ namespace Chat.UI
         public TextBlock ChannelType;
         public TextBox TargetChannel;
         public TextBox MessageField;
+        public TextBlock UserName;
 
         private Channel selected = null;
 
@@ -67,7 +68,7 @@ namespace Chat.UI
 
             foreach (object newChannel in newChannels)
             {
-                users.Add(newChannel);
+                channels.Add(newChannel);
             }
         }
 
@@ -84,6 +85,13 @@ namespace Chat.UI
             ItemCollection messages = MessageBox.Items;
             if (selected == null || selected.Messages == null)
                 return;
+
+            object[] removedMessages = messages.Except(selected.Messages).ToArray();
+
+            foreach (object removed in removedMessages)
+            {
+                messages.Remove(removed);
+            }
 
             object[] newMessages = selected.Messages.Except(messages).ToArray();
 
@@ -113,6 +121,8 @@ namespace Chat.UI
 
             bool isTargetChannelFrozen = newSelected.ChannelType == MessageReceiver.User;
             TargetChannel.IsReadOnly = isTargetChannelFrozen;
+
+            selected = newSelected;
         }
 
     }

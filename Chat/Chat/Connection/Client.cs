@@ -25,6 +25,7 @@ namespace Chat.Connection
         public static int Port { get; } = 50000;
 
         private bool keepListening = true;
+        public string Name { get; private set; }
 
         public static Client GetInstance()
         {
@@ -44,15 +45,14 @@ namespace Chat.Connection
             Debug.WriteLine($"Connected: {client.Connected}");
         }
 
-        public void SendMessage(string message)
+        public void SendMessage(string message, string receiver, MessageReceiver receiverType)
         {
-            Debug.WriteLine($"Sending message. Connected: {client.Connected}");
             NetworkStream stream = client.GetStream();
             Message msgObject = new Message() {
                 MessageType = MessageType.ChatMessage,
-                ReceiverType = MessageReceiver.Channel,
-                ReceiverName = "PublicChannel",
-                SenderName = "Client1",
+                ReceiverType = receiverType,
+                ReceiverName = receiver,
+                SenderName = Name,
                 Text = message
             };
             TcpIO.WriteStream(stream, msgObject);
@@ -91,6 +91,8 @@ namespace Chat.Connection
         {
             if (LogInAs(name))
             {
+                Name = name;
+                UIController.GetInstance().UserName.Text = Name;
                 StartListening();
                 return true;
             }
