@@ -49,8 +49,8 @@ namespace Chat
 
         private void ConnectButton_Click(object sender, RoutedEventArgs e)
         {
-            
-            bool success = Client.GetInstance().Activate(UserNameField.Text);
+            string address = IPField.Text;
+            bool success = Client.GetInstance().Activate(UserNameField.Text, address);
             if (success)
             {
                 NameScreen.Visibility = Visibility.Collapsed;
@@ -63,6 +63,12 @@ namespace Chat
             string receiver = SendTarget.Text;
             MessageReceiver receiverType = (MessageReceiver)Enum.Parse(typeof(MessageReceiver), SendingTo.Text);
             Client.GetInstance().SendMessage(message, receiver, receiverType);
+        }
+
+        private void Disconnect_Click(object sender, RoutedEventArgs e)
+        {
+            NameScreen.Visibility = Visibility.Visible;
+            Client.Reset();
         }
 
         private void InitUIControls(UIController controller)

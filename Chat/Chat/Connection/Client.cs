@@ -21,7 +21,7 @@ namespace Chat.Connection
     class Client
     {
         private static Client instance = null;
-        public static IPAddress IP { get; } = IPAddress.Parse("127.0.0.1");
+        public IPAddress IP { get; private set; }
         public static int Port { get; } = 50000;
 
         private bool keepListening = true;
@@ -35,14 +35,17 @@ namespace Chat.Connection
             return instance;
         }
 
+        public static void Reset()
+        {
+            instance.Dispose();
+            instance = null;
+        }
+
         private TcpClient client;
 
         private Client()
         {
-            client = new TcpClient(IP.ToString(), Port);
-            client.LingerState.Enabled = true;
-            client.LingerState.LingerTime = 0;
-            Debug.WriteLine($"Connected: {client.Connected}");
+            
         }
 
         public void SendMessage(string message, string receiver, MessageReceiver receiverType)
@@ -87,8 +90,15 @@ namespace Chat.Connection
             }
         }
 
-        public bool Activate(string name)
+        public bool Activate(string name, string address)
         {
+            try
+            {
+                IP = IPAddress.Parse(address);
+            } catch
+            {
+                return false;
+            }
             if (LogInAs(name))
             {
                 Name = name;
@@ -104,6 +114,16 @@ namespace Chat.Connection
 
         private bool LogInAs(string name)
         {
+            try
+            {
+                client = new TcpClient(IP.ToString(), Port);
+            } catch
+            {
+                return false;
+            }
+            //client.LingerState.Enabled = true;
+            //client.LingerState.LingerTime = 0;
+            //Debug.WriteLine($"Connected: {client.Connected}");
             Message logInMessage = new Message()
             {
                 MessageType = MessageType.LoginInformation,
@@ -115,11 +135,13 @@ namespace Chat.Connection
             TcpIO.WriteStream(client.GetStream(), logInMessage);
             Message response = null;
             Debug.WriteLine("Started login...");
-            while (response == null)
+            Stopwatch waitingForResponse = Stopwatch.StartNew();
+            while (response == null && waitingForResponse.Elapsed.TotalSeconds < 3)
             {
                 response = TcpIO.ReadStream(client.GetStream());
                 Thread.Yield();
             }
+            waitingForResponse.Stop();
             Debug.WriteLine("Login-response received!");
             if (response.MessageType == MessageType.LoginInformation &&
                 response.ReceiverName == name)
@@ -140,7 +162,7 @@ namespace Chat.Connection
             return DateTime.Now;
         }
 
-        public void Dispose(object sender, SuspendingEventArgs args)
+        public void Dispose()
         {
             keepListening = false;
             Debug.WriteLine("Disposing client...");
