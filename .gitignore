@@ -1,4 +1,5 @@
-Chat/.vs
-Chat/*/bin
-Chat/*/obj
-Chat/*/*.csproj.user
+*/.vs
+*/*/.vs
+*/*/bin
+*/*/obj
+*/*/*.csproj.user
