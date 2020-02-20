@@ -45,7 +45,7 @@ namespace WikiCrawler.DataFetch
             if (!uri.IsAbsoluteUri && Regex.IsMatch(uri.OriginalString, @"^\/wiki\/[^:]*$"))
                 return true;
 
-            return Regex.IsMatch(uri.OriginalString, $@"{goalHost}/wiki/");
+            return Regex.IsMatch(uri.OriginalString, $@"{goalHost}\/wiki\/");
         }
     }
 }

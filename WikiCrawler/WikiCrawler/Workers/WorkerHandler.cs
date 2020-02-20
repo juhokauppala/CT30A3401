@@ -68,21 +68,22 @@ namespace WikiCrawler.Workers
 
         public void StartNextFetchJob()
         {
-            Fetcher fetcher = Fetchers.Where(f => !f.HasWork).FirstOrDefault();
-            if (fetcher == null)
+            IEnumerable<Fetcher> fetchers = Fetchers.Where(f => !f.HasWork);
+            if (fetchers.Count() == 0)
                 return;
 
-            FetcherArgs job = fetchQueue.GetNext();
-
-            if (job != null)
+            foreach (Fetcher fetcher in fetchers)
             {
-                if (!dataHandler.HasVisitedPage(job.Url))
+                FetcherArgs job = fetchQueue.GetNext();
+
+                while (job != null && dataHandler.HasVisitedPage(job.Url))
                 {
-                    fetcher.StartWork(job);
-                } else
-                {
-                    //Console.WriteLine($"Already visited: {job.Url}");
+                    job = fetchQueue.GetNext();
                 }
+                if (job != null)
+                    fetcher.StartWork(job);
+                else
+                    break;
             }
         }
 
