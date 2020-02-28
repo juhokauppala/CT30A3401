@@ -6,11 +6,11 @@ using System.Text;
 using System.Threading.Tasks;
 using YamlDotNet.Serialization;
 
-namespace SerializationPerformer.Serialization
+namespace AvaloniaSerializer.Serialization
 {
     class YAML : ISerializer
     {
-        public string Format => "YAML        ";
+        public string Format => "YAML";
 
         public object Deserialize(byte[] data)
         {

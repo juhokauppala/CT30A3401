@@ -6,12 +6,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace SerializationPerformer.Serialization
+namespace AvaloniaSerializer.Serialization
 {
     class XML : ISerializer
     {
         XmlSerializer serializer;
-        public string Format => "XML         ";
+        public string Format => "XML";
 
         public object Deserialize(byte[] data)
         {

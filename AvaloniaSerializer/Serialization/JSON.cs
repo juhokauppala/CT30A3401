@@ -6,12 +6,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SerializationPerformer.Serialization
+namespace AvaloniaSerializer.Serialization
 {
     class JSON : ISerializer
     {
         private JsonSerializer serializer = new JsonSerializer();
-        public string Format => "JSON        ";
+        public string Format => "JSON";
 
         public object Deserialize(byte[] data)
         {

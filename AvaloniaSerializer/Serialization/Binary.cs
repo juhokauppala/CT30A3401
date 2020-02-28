@@ -6,12 +6,12 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SerializationPerformer.Serialization
+namespace AvaloniaSerializer.Serialization
 {
     class Binary : ISerializer
     {
         private BinaryFormatter formatter = new BinaryFormatter();
-        public string Format => "Binary      ";
+        public string Format => "Binary";
 
         public object Deserialize(byte[] data)
         {

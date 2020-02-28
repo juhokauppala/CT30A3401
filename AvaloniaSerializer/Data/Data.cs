@@ -3,11 +3,11 @@ using System.Xml.Serialization;
 using MessagePack;
 
 
-namespace SerializationPerformer.Data
+namespace AvaloniaSerializer.Data
 {
     static class Data
     {
-        public static object[] DataObjects = { new Data1(), new Data2(), new Data3() };
+        public static object[] DataObjects = { new Data1(), new Data2(), new Data3() /*, new Data4() */ };
     }
 
     [MessagePackObject]
@@ -104,4 +104,15 @@ Obama's presidency has generally been regarded favorably, and evaluations of his
         [Key(30)]
         public string _e = "a";
     }
+    /* Include this to test scalability of histogram UI
+    [MessagePackObject]
+    [Serializable]
+    public class Data4
+    {
+        [Key(0)]
+        public bool ThisWorksOnDocker = true;
+        [Key(1)]
+        public string HowSo = "I hope because I tested 2 frameworks that didn't";
+    }
+    */
 }

@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SerializationPerformer.Serialization
+namespace AvaloniaSerializer.Serialization
 {
     interface ISerializer
     {

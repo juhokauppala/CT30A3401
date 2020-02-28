@@ -6,3 +6,6 @@
 */*/obj
 */*/*.csproj.user
 */packages
+/SerializationComparer/nbproject/private/
+/SerializationComparer/dist/
+/SerializationComparer/build/

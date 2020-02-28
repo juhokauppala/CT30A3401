@@ -1,4 +1,4 @@
-﻿using SerializationPerformer.Serialization;
+﻿using AvaloniaSerializer.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,7 +7,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SerializationPerformer
+namespace AvaloniaSerializer
 {
     class Runner
     {
@@ -18,13 +18,17 @@ namespace SerializationPerformer
             this.serializers = serializers;
         }
 
-        public Tuple<double, double, int>[,] Run(IEnumerable<object> data)
+        public Tuple<Tuple<double, double, int>[,], string[]> Run(IEnumerable<object> data)
         {
             /* Matrix of Tuple<serializeTime, deserializeTime, serializedDataSize> with dataObject on x-axis and serializer (format) on y-axis */
             Tuple<double, double, int>[,] secondsElapsed = new Tuple<double, double, int>[data.Count(), serializers.Count()];
+            string[] formats = new string[serializers.Count()];
             Stopwatch stopwatch = new Stopwatch();
             int dataCounter = 0;
             int serializerCounter = 0;
+
+            Debug.WriteLine($"{"FORMAT",15} | {"Serialization / ms",20} {"Deserialization / ms",20} {"Size / B",8}");
+            Debug.WriteLine("");
 
             foreach (object datum in data)
             {
@@ -41,14 +45,17 @@ namespace SerializationPerformer
                     secondsElapsed[dataCounter, serializerCounter] = new Tuple<double, double, int>(serializationTime, deserializationTime, serialized.Length);
                     serializerCounter++;
 
-                    Console.WriteLine($"{serializer.Format}\t : (S) {serializationTime}  \t (DS) {deserializationTime}    \t (B) {serialized.Length}");
+                    Debug.WriteLine($"{serializer.Format,-15} | {serializationTime,20} {deserializationTime,20} {serialized.Length,8}");
+
+                    if (data.First() == datum)
+                        formats[serializers.ToList().IndexOf(serializer)] = serializer.Format;
                 }
                 serializerCounter = 0;
                 dataCounter++;
-                Console.WriteLine("---");
+                Debug.WriteLine("---");
             }
 
-            return secondsElapsed;
+            return new Tuple<Tuple<double, double, int>[,], string[]>(secondsElapsed, formats);
         }
     }
 }
