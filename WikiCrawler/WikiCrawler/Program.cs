@@ -24,8 +24,8 @@ namespace WikiCrawler
 
         private static bool Run()
         {
-            const int numFetchers = 9;
-            const int numParsers = 3;
+            const int numFetchers = 50;
+            const int numParsers = 1024;
 
             Console.Write("Starting page: ");
             string startPage = Console.ReadLine();
